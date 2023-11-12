@@ -7,11 +7,12 @@ import (
 	"net/http"
 )
 
-//main function to start the server
+// main function to start the server
 func main() {
-	http.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "Hello World!")
-	})
+	fileServer := http.FileServer(http.Dir("./static"))
+	http.Handle("/", fileServer)
+	http.HandleFunc("/hello", helloHandler)
+	http.HandleFunc("/form", formHandler)
 
 	fmt.Printf("Starting server on port 8080\n")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
@@ -19,7 +20,7 @@ func main() {
 	}
 }
 
-//helloHandler function to handle the request
+// helloHandler function to handle the request
 func helloHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/hello" {
 		http.Error(w, "Invalid URL.", http.StatusNotFound)
@@ -32,4 +33,16 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "Hello World!")
+}
+
+func formHandler(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		fmt.Fprintf(w, "Error parsing form: %v", err)
+		return
+	}
+	fmt.Fprintf(w, "POST request successfully received.")
+	name := r.FormValue("name")
+	email := r.FormValue("email")
+
+	fmt.Fprintf(w, "Name: %s\nEmail: %s\n", name, email)
 }
